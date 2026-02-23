@@ -39,9 +39,9 @@ class TreeCache<T = mixed> {
   // $FlowIssue[unclear-type]
   _root: TreeCacheNode<any> | null;
 
-  _onHit: $NonMaybeType<Options<T>['onHit']>;
-  _onSet: $NonMaybeType<Options<T>['onSet']>;
-  _mapNodeValue: $NonMaybeType<Options<T>['mapNodeValue']>;
+  _onHit: (node: TreeCacheLeaf<T>) => void;
+  _onSet: (node: TreeCacheLeaf<T>) => void;
+  _mapNodeValue: (value: mixed) => mixed;
 
   constructor(options?: Options<T>) {
     this._name = options?.name;

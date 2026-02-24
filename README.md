@@ -1,4 +1,4 @@
-# Recoil &middot; [![NPM Version](https://img.shields.io/npm/v/recoil)](https://www.npmjs.com/package/recoil) [![Yarn Test](https://github.com/voxel51/recoil/actions/workflows/yarn-test.yml/badge.svg)](https://github.com/voxel51/recoil/actions/workflows/yarn-test.yml) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebookexperimental/Recoil/blob/main/LICENSE)
+# Recoil &middot; [![Yarn Test](https://github.com/voxel51/recoil/actions/workflows/yarn-test.yml/badge.svg)](https://github.com/voxel51/recoil/actions/workflows/yarn-test.yml) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebookexperimental/Recoil/blob/main/LICENSE)
 
 Recoil is an experimental state management framework for React.
 

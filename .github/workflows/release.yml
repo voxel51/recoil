@@ -1,7 +1,9 @@
 name: Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Node.js CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -14,12 +16,15 @@ concurrency:
 
 jobs:
   release:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,7 +53,7 @@ jobs:
           name: main
           prerelease: true
           generateReleaseNotes: true
-          artifacts: build/recoil/*.tgz
+          artifacts: package.tgz
           artifactErrorsFailBuild: true
           allowUpdates: true
           replacesArtifacts: true

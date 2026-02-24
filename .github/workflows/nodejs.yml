@@ -1,51 +1,54 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [16.x, 18.x]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        react: ['17.0.2', '18.1.0']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ["24"]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm i -g yarn
-    - run: cd packages-ext/recoil-devtools && yarn install --frozen-lockfile
-    - run: yarn install --frozen-lockfile
-    - name: Install React (Unix/Mac)
-      run: >
-       sed -i'' -e 's/\("react\(-dom\)\{0,1\}\(-test-renderer\)\{0,1\}": "\).*"/\1${{ matrix.react }}"/g' package.json
-      if: matrix.os != 'windows-latest'
-    - name: Install React (Windows)
-      run: >
-       sed -i 's/\(""react\(-dom\)\\{0,1\\}\(-test-renderer\)\\{0,1\\}"": ""\).*""/\1${{ matrix.react }}""/g' package.json
-      if: matrix.os == 'windows-latest'
-    - run: yarn install
-    - run: yarn flow
-    - run: yarn test:typescript
-    - run: yarn test
-    - run: yarn lint
-    - run: yarn build
-    - run: yarn run pack
-    - name: Create package
-      uses: actions/upload-artifact@v3
-      with:
-        name: package
-        path: "build/recoil/*.tgz"
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+
+      - name: Activate Yarn 4
+        run: |
+          corepack enable
+          corepack prepare yarn@4.9.2 --activate
+          corepack yarn --version
+
+      - name: Install recoil-devtools dependencies
+        run: |
+          cd packages-ext/recoil-devtools
+          corepack yarn install --immutable
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - run: corepack yarn flow
+      - run: corepack yarn test:typescript
+      - run: corepack yarn test
+      - run: corepack yarn lint
+      - run: corepack yarn build
+      - run: corepack yarn pack
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.os }}
+          path: build/recoil/*.tgz

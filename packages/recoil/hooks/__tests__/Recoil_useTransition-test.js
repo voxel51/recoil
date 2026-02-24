@@ -26,6 +26,7 @@ let React,
   atom,
   selectorFamily,
   renderElements,
+  isLegacyReactRootAvailable,
   reactMode,
   flushPromisesAndTimers;
 
@@ -43,6 +44,7 @@ const testRecoil = getRecoilTestFn(() => {
   } = require('../../Recoil_index'));
   ({
     renderElements,
+    isLegacyReactRootAvailable,
     flushPromisesAndTimers,
   } = require('recoil-shared/__test_utils__/Recoil_TestingUtils'));
   ({reactMode} = require('../../core/Recoil_ReactMode'));
@@ -236,7 +238,7 @@ testRecoil('useRecoilValue()', async ({concurrentMode}) => {
   // Transition changing React State
   act(startReactTransition);
   expect(c.textContent).toBe(
-    concurrentMode
+    concurrentMode || !isLegacyReactRootAvailable()
       ? 'React:0 Recoil:0 [IN TRANSITION] | 0 0 0 RESOLVED'
       : 'React:1 Recoil:0 | LOADING',
   );
@@ -247,7 +249,7 @@ testRecoil('useRecoilValue()', async ({concurrentMode}) => {
   // Transition changing Recoil State
   act(startRecoilTransition);
   expect(c.textContent).toBe(
-    concurrentMode && reactMode().concurrent
+    reactMode().concurrent
       ? 'React:1 Recoil:0 [IN TRANSITION] | 1 1 0 RESOLVED'
       : 'React:1 Recoil:1 | LOADING',
   );
@@ -258,7 +260,7 @@ testRecoil('useRecoilValue()', async ({concurrentMode}) => {
   // Second transition changing Recoil State
   act(startRecoilTransition);
   expect(c.textContent).toBe(
-    concurrentMode && reactMode().concurrent
+    reactMode().concurrent
       ? 'React:1 Recoil:1 [IN TRANSITION] | 1 1 1 RESOLVED'
       : 'React:1 Recoil:2 | LOADING',
   );
@@ -269,7 +271,7 @@ testRecoil('useRecoilValue()', async ({concurrentMode}) => {
   // Transition with both React and Recoil state
   act(startBothTransition);
   expect(c.textContent).toBe(
-    concurrentMode && reactMode().concurrent
+    reactMode().concurrent
       ? 'React:1 Recoil:2 [IN TRANSITION] | 1 1 2 RESOLVED'
       : 'React:2 Recoil:3 | LOADING',
   );
@@ -360,7 +362,7 @@ testRecoil(
     // Transition changing React State
     act(startReactTransition);
     expect(c.textContent).toBe(
-      concurrentMode
+      concurrentMode || !isLegacyReactRootAvailable()
         ? 'React:0 Recoil:0 [IN TRANSITION] | 0 0 0 RESOLVED'
         : 'React:1 Recoil:0 | LOADING',
     );
@@ -371,7 +373,7 @@ testRecoil(
     // Transition changing Recoil State
     act(startRecoilTransition);
     expect(c.textContent).toBe(
-      concurrentMode && reactMode().early
+      (concurrentMode && reactMode().early) || !isLegacyReactRootAvailable()
         ? 'React:1 Recoil:0 [IN TRANSITION] | 1 1 0 RESOLVED'
         : 'React:1 Recoil:1 | LOADING',
     );
@@ -382,7 +384,7 @@ testRecoil(
     // Second transition changing Recoil State
     act(startRecoilTransition);
     expect(c.textContent).toBe(
-      concurrentMode && reactMode().early
+      (concurrentMode && reactMode().early) || !isLegacyReactRootAvailable()
         ? 'React:1 Recoil:1 [IN TRANSITION] | 1 1 1 RESOLVED'
         : 'React:1 Recoil:2 | LOADING',
     );
@@ -393,7 +395,7 @@ testRecoil(
     // Transition with both React and Recoil State
     act(startBothTransition);
     expect(c.textContent).toBe(
-      concurrentMode
+      concurrentMode || !isLegacyReactRootAvailable()
         ? 'React:1 Recoil:2 [IN TRANSITION] | 1 1 2 RESOLVED'
         : 'React:2 Recoil:3 | LOADING',
     );

@@ -48,6 +48,7 @@ let React,
   renderElements,
   renderUnwrappedElements,
   renderElementsWithSuspenseCount,
+  isLegacyReactRootAvailable,
   componentThatReadsAndWritesAtom,
   useRecoilState,
   useRecoilValue,
@@ -82,6 +83,7 @@ const testRecoil = getRecoilTestFn(() => {
     renderElements,
     renderUnwrappedElements,
     renderElementsWithSuspenseCount,
+    isLegacyReactRootAvailable,
     componentThatReadsAndWritesAtom,
   } = require('recoil-shared/__test_utils__/Recoil_TestingUtils'));
   ({reactMode} = require('../../core/Recoil_ReactMode'));
@@ -1549,7 +1551,8 @@ describe('Async Selectors', () => {
     'Wakeup from Suspense to previous value',
     async ({gks, strictMode, concurrentMode}) => {
       const BASE_CALLS = baseRenderCount(gks);
-      const sm = strictMode && concurrentMode ? 2 : 1;
+      const sm =
+        strictMode && concurrentMode && isLegacyReactRootAvailable() ? 2 : 1;
 
       const myAtom = atom({
         key: `atom${nextID++}`,
@@ -2555,7 +2558,11 @@ describe('Counts', () => {
       'Resolution of suspense causes render just once',
       async ({gks, strictMode, concurrentMode}) => {
         const BASE_CALLS = baseRenderCount(gks);
-        const sm = strictMode && concurrentMode ? 2 : 1;
+        const strictConcurrentMode = strictMode && concurrentMode;
+        const expectedInitialSuspenseCalls = strictConcurrentMode ? 2 : 1;
+        const expectedSuspenseCallsAfterDependencyChange = strictConcurrentMode
+          ? 3
+          : 2;
 
         jest.useFakeTimers();
         const anAtom = counterAtom();
@@ -2573,18 +2580,22 @@ describe('Counts', () => {
         // Begins in loading state, then shows initial value:
         act(() => jest.runAllTimers());
         await flushPromisesAndTimers();
-        expect(suspense).toHaveBeenCalledTimes(1 * sm);
+        expect(suspense).toHaveBeenCalledTimes(expectedInitialSuspenseCalls);
         expect(commit).toHaveBeenCalledTimes(BASE_CALLS + 1);
         // Changing dependency makes it go back to loading, then to show new value:
         act(() => updateValue(1));
         act(() => jest.runAllTimers());
         await flushPromisesAndTimers();
-        expect(suspense).toHaveBeenCalledTimes(2 * sm);
+        expect(suspense).toHaveBeenCalledTimes(
+          expectedSuspenseCallsAfterDependencyChange,
+        );
         expect(commit).toHaveBeenCalledTimes(BASE_CALLS + 2);
         // Returning to a seen value does not cause the loading state:
         act(() => updateValue(0));
         await flushPromisesAndTimers();
-        expect(suspense).toHaveBeenCalledTimes(2 * sm);
+        expect(suspense).toHaveBeenCalledTimes(
+          expectedSuspenseCallsAfterDependencyChange,
+        );
         expect(commit).toHaveBeenCalledTimes(BASE_CALLS + 3);
       },
     );

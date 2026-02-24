@@ -532,7 +532,15 @@ export type SyncEffectOptions<T> = {
 };
 
 function syncEffect<T>(opt: SyncEffectOptions<T>): AtomEffect<T> {
-  return ({node, trigger, storeID, setSelf, getLoadable, getInfo_UNSTABLE}) => {
+  return ({
+    node,
+    trigger,
+    storeID,
+    setSelf,
+    onSet,
+    getLoadable,
+    getInfo_UNSTABLE,
+  }) => {
     // Get options with defaults
     const itemKey = opt.itemKey ?? node.key;
     const options: AtomSyncOptions<T> = {
@@ -545,6 +553,36 @@ function syncEffect<T>(opt: SyncEffectOptions<T>): AtomEffect<T> {
     };
     const {storeKey} = options;
     const storage = registries.getStorage(storeID, storeKey);
+    const writeToStorage = storage?.write;
+    let hasPersistedInitialRead = false;
+    const persistLoadable = loadable => {
+      if (
+        hasPersistedInitialRead ||
+        options.syncDefault !== true ||
+        writeToStorage == null ||
+        loadable.state !== 'hasValue'
+      ) {
+        return;
+      }
+
+      const diff = writeAtomItemsToDiff(
+        new Map(),
+        options,
+        storage?.read,
+        loadable,
+      );
+      if (diff.size) {
+        writeToStorage(
+          getWriteInterface(storeID, storeKey, diff, getInfo_UNSTABLE),
+        );
+        hasPersistedInitialRead = true;
+      }
+    };
+    if (options.syncDefault === true && writeToStorage != null) {
+      onSet((newValue, _, isReset) =>
+        persistLoadable(RecoilLoadable.of(isReset ? DEFAULT_VALUE : newValue)),
+      );
+    }
 
     // Register Atom
     const {effectRegistration, unregisterEffect} = registries.setAtomEffect(
@@ -585,21 +623,17 @@ function syncEffect<T>(opt: SyncEffectOptions<T>): AtomEffect<T> {
       }
 
       // Persist on Initial Read
-      const writeToStorage = storage?.write;
       if (options.syncDefault === true && writeToStorage != null) {
         window.setTimeout(() => {
           const loadable = getLoadable(node);
-          if (loadable.state === 'hasValue') {
-            const diff = writeAtomItemsToDiff(
-              new Map(),
-              options,
-              storage?.read,
-              loadable,
-            );
-            writeToStorage(
-              getWriteInterface(storeID, storeKey, diff, getInfo_UNSTABLE),
-            );
+          if (loadable.state === 'loading') {
+            loadable
+              .toPromise()
+              .then(() => persistLoadable(getLoadable(node)))
+              .catch(() => {});
+            return;
           }
+          persistLoadable(loadable);
         }, 0);
       }
     }

@@ -8,7 +8,12 @@
  * @oncall recoil
  */
 
-const Promise = require('promise-polyfill');
+'use strict';
 
-global.Promise = Promise;
-global.IS_REACT_ACT_ENVIRONMENT = true;
+const React = require('react');
+const ReactDOMTestUtils = require('react-dom/test-utils');
+
+module.exports = {
+  ...ReactDOMTestUtils,
+  act: React.act ?? ReactDOMTestUtils.act,
+};

@@ -11,7 +11,7 @@
 'use strict';
 import type {MutableSnapshot, Snapshot} from 'Recoil_Snapshot';
 
-const {Simulate, act} = require('ReactTestUtils');
+const {act} = require('ReactTestUtils');
 
 const {freshSnapshot} = require('../../../core/Recoil_Snapshot');
 const atom = require('../../../recoil_values/Recoil_atom');
@@ -28,6 +28,16 @@ const {
 
 const myAtom = atom<string>({key: 'Link Snapshot', default: 'DEFAULT'});
 const [ReadsAndWritesAtom, setAtom] = componentThatReadsAndWritesAtom(myAtom);
+
+function clickElement(element: Element) {
+  element.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+    }),
+  );
+}
 
 const LinkToSnapshot = ({
   snapshot,
@@ -88,7 +98,7 @@ test('Link - snapshot', async () => {
   );
 
   act(() => {
-    Simulate.click(c.children[0], {button: 0});
+    clickElement(c.children[0]);
   });
   await flushPromisesAndTimers();
   expect(c.textContent).toEqual('"MAP"LINK-MAP');
@@ -114,7 +124,7 @@ test('Link - stateChange', async () => {
   );
 
   act(() => {
-    Simulate.click(c.children[0], {button: 0});
+    clickElement(c.children[0]);
   });
   await flushPromisesAndTimers();
   expect(c.textContent).toEqual('"MAP"LINK');
@@ -141,7 +151,7 @@ test('Link - state update', async () => {
   );
 
   act(() => {
-    Simulate.click(c.children[0], {button: 0});
+    clickElement(c.children[0]);
   });
   await flushPromisesAndTimers();
   expect(c.textContent).toEqual('"MAP SET"LINK');

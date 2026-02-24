@@ -49,6 +49,10 @@ const {useEffect} = require('react');
 const err = require('recoil-shared/util/Recoil_err');
 
 const ReactDOM = require('react-dom'); // @oss-only
+let ReactDOMClient;
+try {
+  ReactDOMClient = require('react-dom/client'); // @oss-only
+} catch {}
 const StrictMode = React.StrictMode; // @oss-only
 
 const QUICK_TEST = false;
@@ -128,30 +132,54 @@ function renderLegacyReactRoot<Props>(
   container: HTMLElement,
   contents: ReactAbstractElement<Props>,
 ) {
-  ReactDOM.render(contents, container); // @oss-only
-  // @fb-only: ReactDOM.render(contents, container, 'Recoil_TestingUtils.js');
+  if (typeof ReactDOM.render === 'function') {
+    ReactDOM.render(contents, container); // @oss-only
+    // @fb-only: ReactDOM.render(contents, container, 'Recoil_TestingUtils.js');
+    return;
+  }
+  renderWithCreateRoot(container, contents);
 }
 
 // @fb-only: const createRoot = ReactDOMComet.createRoot;
 // $FlowFixMe[prop-missing] unstable_createRoot is not part of react-dom typing // @oss-only
-const createRoot = ReactDOM.createRoot ?? ReactDOM.unstable_createRoot; // @oss-only
+const createRoot =
+  ReactDOM.createRoot ??
+  ReactDOM.unstable_createRoot ??
+  ReactDOMClient?.createRoot; // @oss-only
+const rootsByContainer: WeakMap<HTMLElement, mixed> = new WeakMap();
 
 function isConcurrentModeAvailable(): boolean {
   return createRoot != null;
 }
 
-function renderConcurrentReactRoot<Props>(
+function isLegacyReactRootAvailable(): boolean {
+  return typeof ReactDOM.render === 'function';
+}
+
+function renderWithCreateRoot<Props>(
   container: HTMLElement,
   contents: ReactAbstractElement<Props>,
-  // $FlowFixMe[missing-local-annot]
 ) {
   if (!isConcurrentModeAvailable()) {
     throw err(
       'Concurrent rendering is not available with the current version of React.',
     );
   }
-  // $FlowFixMe[not-a-function] unstable_createRoot is not part of react-dom typing // @oss-only
-  createRoot(container).render(contents);
+  let root = rootsByContainer.get(container);
+  if (root == null) {
+    // $FlowFixMe[not-a-function] unstable_createRoot is not part of react-dom typing // @oss-only
+    root = createRoot(container);
+    rootsByContainer.set(container, root);
+  }
+  // $FlowFixMe[prop-missing]
+  root.render(contents);
+}
+
+function renderConcurrentReactRoot<Props>(
+  container: HTMLElement,
+  contents: ReactAbstractElement<Props>,
+) {
+  renderWithCreateRoot(container, contents);
 }
 
 function renderUnwrappedElements(
@@ -394,7 +422,9 @@ const testGKs =
       runTests({strictMode: false, concurrentMode: true});
     } else {
       runTests({strictMode: false, concurrentMode: false});
-      runTests({strictMode: true, concurrentMode: false});
+      if (isLegacyReactRootAvailable()) {
+        runTests({strictMode: true, concurrentMode: false});
+      }
       if (isConcurrentModeAvailable()) {
         runTests({strictMode: false, concurrentMode: true});
         // 2020-12-20: The internal <StrictMode> isn't yet enabled to run effects
@@ -474,5 +504,6 @@ module.exports = {
   asyncSelector,
   flushPromisesAndTimers,
   getRecoilTestFn,
+  isLegacyReactRootAvailable,
   IS_INTERNAL,
 };

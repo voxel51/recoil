@@ -37,6 +37,7 @@ let React,
   ReadsAtom,
   renderElements,
   renderUnwrappedElements,
+  isLegacyReactRootAvailable,
   recoilComponentGetRecoilValueCount_FOR_TESTING,
   useRecoilState,
   useRecoilStateLoadable,
@@ -59,6 +60,7 @@ const testRecoil = getRecoilTestFn(() => {
     ReadsAtom,
     renderElements,
     renderUnwrappedElements,
+    isLegacyReactRootAvailable,
   } = require('recoil-shared/__test_utils__/Recoil_TestingUtils'));
   ({reactMode} = require('../../core/Recoil_ReactMode'));
   ({
@@ -368,13 +370,18 @@ describe('Render counts', () => {
 
   testRecoil(
     'Component does not re-read atom when rendered due to another atom changing, parent re-render, or other state change',
-    () => {
+    ({strictMode}) => {
       // useSyncExternalStore() will always call getSnapshot() to see if it has
       // mutated between render and commit.
       if (
         reactMode().mode === 'LEGACY' ||
         reactMode().mode === 'SYNC_EXTERNAL_STORE'
       ) {
+        return;
+      }
+      // React 19 uses createRoot() for all roots in OSS, and StrictMode adds
+      // extra read checks that make this exact render-count assertion unstable.
+      if (strictMode && !isLegacyReactRootAvailable()) {
         return;
       }
 

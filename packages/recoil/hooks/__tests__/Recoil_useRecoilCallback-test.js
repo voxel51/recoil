@@ -414,19 +414,23 @@ testRecoil('Updates are batched', () => {
 // from useRecoilCallback() when it is memoizaed
 testRecoil('Consistent callback function', () => {
   let setIteration;
+  let callbackBefore;
+  let callbackAfter;
+  let callbackMemoizedBefore;
+  let callbackMemoizedAfter;
   const Component = () => {
     const [iteration, _setIteration] = useState(0);
     setIteration = _setIteration;
 
     const callback = useRecoilCallback(() => () => {});
-    const callbackRef = useRef(callback);
-    iteration
-      ? expect(callback).not.toBe(callbackRef.current)
-      : expect(callback).toBe(callbackRef.current);
-
     const callbackMemoized = useRecoilCallback(() => () => {}, []);
-    const callbackMemoizedRef = useRef(callbackMemoized);
-    expect(callbackMemoized).toBe(callbackMemoizedRef.current);
+    if (iteration === 0) {
+      callbackBefore = callback;
+      callbackMemoizedBefore = callbackMemoized;
+    } else {
+      callbackAfter = callback;
+      callbackMemoizedAfter = callbackMemoized;
+    }
 
     return iteration;
   };
@@ -434,6 +438,8 @@ testRecoil('Consistent callback function', () => {
   expect(out.textContent).toBe('0');
   act(() => setIteration(1)); // Force a re-render of the Component
   expect(out.textContent).toBe('1');
+  expect(callbackAfter).not.toBe(callbackBefore);
+  expect(callbackMemoizedAfter).toBe(callbackMemoizedBefore);
 });
 
 describe('Atom Effects', () => {

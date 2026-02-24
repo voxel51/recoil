@@ -15,6 +15,8 @@ module.exports = {
     __DEV__: true,
   },
   moduleNameMapper: {
+    '^ReactTestUtils$':
+      '<rootDir>/packages/shared/__test_utils__/ReactTestUtilsShim.js',
     '^recoil-shared(.*)$': '<rootDir>/packages/shared$1',
     '^Recoil$': '<rootDir>/packages/recoil',
     '^recoil-sync$': '<rootDir>/packages/recoil-sync',

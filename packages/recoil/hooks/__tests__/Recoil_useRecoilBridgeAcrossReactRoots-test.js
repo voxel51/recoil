@@ -22,6 +22,7 @@ const {
 let React,
   renderElements,
   renderUnwrappedElements,
+  flushPromisesAndTimers,
   useEffect,
   useRef,
   act,
@@ -39,6 +40,7 @@ const testRecoil = getRecoilTestFn(() => {
   ({
     renderElements,
     renderUnwrappedElements,
+    flushPromisesAndTimers,
     componentThatReadsAndWritesAtom,
   } = require('recoil-shared/__test_utils__/Recoil_TestingUtils'));
 
@@ -87,14 +89,16 @@ testRecoil(
       </RecoilRoot>,
     );
 
+    await flushPromisesAndTimers();
     expect(container.textContent).toEqual('"INITIALIZE""INITIALIZE"');
 
     act(() => setAtom('SET'));
+    await flushPromisesAndTimers();
     expect(container.textContent).toEqual('"SET""SET"');
   },
 );
 
-testRecoil('StoreID matches bridged store', () => {
+testRecoil('StoreID matches bridged store', async () => {
   function RecoilStoreID({storeIDRef}: {storeIDRef: {current: ?StoreID}}) {
     storeIDRef.current = useRecoilStoreID();
     return null;
@@ -112,6 +116,7 @@ testRecoil('StoreID matches bridged store', () => {
       RENDER
     </>,
   );
+  await flushPromisesAndTimers();
   expect(c.textContent).toEqual('RENDER');
   expect(rootStoreIDRef.current).toBe(nestedStoreIDRef.current);
   expect(rootStoreIDRef.current).not.toBe(null);

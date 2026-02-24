@@ -42,8 +42,3 @@ input FeedbackLikeSubscribeData {
 }
 
 union FeedbackLikeSubscribeResponsePayload = FeedbackLikeResponsePayload
-
-type FeedbackLikeResponsePayload {
-    feedback: Feedback
-    liker: Actor
-}

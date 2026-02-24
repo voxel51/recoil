@@ -760,12 +760,10 @@ test('Listen to storage', async () => {
   ]);
   const storage2 = new Map([['recoil-sync listen to multiple storage', 'C2']]);
 
-  let updateItem1: (
-    ItemKey,
-    DefaultValue | Loadable<string> | string,
-  ) => void = () => {
-    throw new Error('Failed to register 1');
-  };
+  let updateItem1: (ItemKey, DefaultValue | Loadable<string> | string) => void =
+    () => {
+      throw new Error('Failed to register 1');
+    };
   let updateItems1: ItemSnapshot => void = _ => {
     throw new Error('Failed to register 1');
   };
@@ -1011,6 +1009,7 @@ test('Persist on read - async', async () => {
   act(() => {
     resolveB2('ASYNC_INIT_AFTER');
   });
+  await flushPromisesAndTimers();
   await flushPromisesAndTimers();
   expect(container.textContent).toBe('"ASYNC_DEFAULT""ASYNC_INIT_AFTER"');
   expect(storage.size).toBe(2);

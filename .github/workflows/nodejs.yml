@@ -31,11 +31,6 @@ jobs:
           corepack prepare yarn@4.9.2 --activate
           corepack yarn --version
 
-      - name: Install recoil-devtools dependencies
-        run: |
-          cd packages-ext/recoil-devtools
-          corepack yarn install --immutable
-
       - name: Install dependencies
         run: corepack yarn install --immutable
 

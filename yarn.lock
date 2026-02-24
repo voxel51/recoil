@@ -7686,7 +7686,7 @@ __metadata:
     transit-js: "npm:^0.8.874"
     typescript: "npm:^3.9.5"
   peerDependencies:
-    react: ">=18"
+    react: ">=19"
   peerDependenciesMeta:
     react-dom:
       optional: true

@@ -15,45 +15,28 @@ const React = require('react');
 const gkx = require('recoil-shared/util/Recoil_gkx');
 const recoverableViolation = require('recoil-shared/util/Recoil_recoverableViolation');
 
-// https://github.com/reactwg/react-18/discussions/86
+// React 19 API
 const useSyncExternalStore: <T>(
   subscribe: (() => void) => () => void,
   getSnapshot: () => T,
   getServerSnapshot?: () => T,
 ) => T =
   // flowlint-next-line unclear-type:off
-  (React: any).useSyncExternalStore ??
-  // flowlint-next-line unclear-type:off
-  (React: any).unstable_useSyncExternalStore;
+  (React: any).useSyncExternalStore;
 
 let ReactRendererVersionMismatchWarnOnce = false;
 
 // Check if the current renderer supports `useSyncExternalStore()`.
-// Since React goes through a proxy dispatcher and the current renderer can
-// change we can't simply check if `React.useSyncExternalStore()` is defined.
+// This fork targets React 19; renderer compatibility is based on the public API.
 function currentRendererSupportsUseSyncExternalStore(): boolean {
-  // React 19 removed __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.
-  // If internals are unavailable, fallback to public API presence.
-  const reactInternals =
-    /* $FlowFixMe[prop-missing] Internal field not typed in Flow */
-    React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-  let isUseSyncExternalStoreSupported = useSyncExternalStore != null;
-
-  if (reactInternals != null) {
-    // $FlowFixMe[incompatible-use]
-    const {ReactCurrentDispatcher, ReactCurrentOwner} = reactInternals;
-    const dispatcher =
-      ReactCurrentDispatcher?.current ?? ReactCurrentOwner?.currentDispatcher;
-    isUseSyncExternalStoreSupported = dispatcher?.useSyncExternalStore != null;
-  }
+  const isUseSyncExternalStoreSupported = useSyncExternalStore != null;
   if (
-    useSyncExternalStore &&
     !isUseSyncExternalStoreSupported &&
     !ReactRendererVersionMismatchWarnOnce
   ) {
     ReactRendererVersionMismatchWarnOnce = true;
     recoverableViolation(
-      'A React renderer without React 18+ API support is being used with React 18+.',
+      'A React renderer without useSyncExternalStore() support is being used with this React 19 Recoil fork.',
       'recoil',
     );
   }

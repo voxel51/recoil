@@ -9,11 +9,11 @@ Website: https://recoiljs.org
 This workspace uses a fork of Recoil and targets React 19.
 
 - What we changed:
-  - We updated React-mode detection to handle React 19 removing `__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED` by falling back to public `useSyncExternalStore` availability.
+  - We updated React-mode detection for React 19 by using the public `useSyncExternalStore` API directly (no React internals probing).
   - We added a hook parity test (`packages/recoil/hooks/__tests__/Recoil_HooksParity-test.js`) and validated all core public hooks in this setup.
 
 - Known risks:
-  - Mixed-renderer environments (like React DOM + React Three Fiber) can still be risky. If React internals are unavailable, Recoil cannot verify dispatcher-level `useSyncExternalStore` support and falls back to API presence checks.
+  - Mixed-renderer environments (for example React DOM + React Three Fiber) can still be risky when renderer versions are skewed or when multiple React copies are bundled. This is however unlikely to be a problem in practice.
 
 ## Documentation
 

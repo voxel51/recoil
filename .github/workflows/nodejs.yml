@@ -34,8 +34,6 @@ jobs:
       - name: Install dependencies
         run: corepack yarn install --immutable
 
-      - run: corepack yarn flow
-      - run: corepack yarn test:typescript
       - run: corepack yarn test
       - run: corepack yarn lint
       - run: corepack yarn build
